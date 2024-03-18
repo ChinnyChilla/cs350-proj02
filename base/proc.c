@@ -17,6 +17,8 @@ static struct proc *initproc;
 int nextpid = 1;
 int sched_trace_enabled = 0; // ZYF: for OS CPU/process project
 int sched_trace_counter = 0; // ZYF: counter for print formatting
+int fork_winner = 0;
+int scheduler_policy = 0;
 extern void forkret(void);
 extern void trapret(void);
 
@@ -218,6 +220,10 @@ fork(void)
   np->state = RUNNABLE;
   release(&ptable.lock);
 
+  if (fork_winner) {
+	yield();
+  }
+
   return pid;
 }
 
@@ -331,7 +337,7 @@ scheduler(void)
   for(;;){
     // Enable interrupts on this processor.
     sti();
-
+		if (scheduler_policy == 0) {
         // Loop over process table looking for process to run.
         acquire(&ptable.lock);
         ran = 0;
@@ -356,6 +362,7 @@ scheduler(void)
           c->proc = 0;
     }
     release(&ptable.lock);
+  	}
 
     if (ran == 0){
         halt();

@@ -112,3 +112,15 @@ int sys_enable_sched_trace(void)
 
   return 0;
 }
+
+extern int fork_winner;
+void sys_fork_winner(void) {
+	argint(0, &fork_winner);
+	return;
+}
+
+extern int scheduler_policy;
+void sys_set_sched(void) {
+	argint(0, &scheduler_policy);
+	return;
+}
