@@ -17,8 +17,8 @@ static struct proc *initproc;
 int nextpid = 1;
 int sched_trace_enabled = 0; // ZYF: for OS CPU/process project
 int sched_trace_counter = 0; // ZYF: counter for print formatting
-int fork_winner = 0;
-int scheduler_policy = 0;
+int condition;
+int policy;
 int STRIDE_TOTAL_TICKETS = 100;
 extern void forkret(void);
 extern void trapret(void);
@@ -221,8 +221,9 @@ fork(void)
   np->state = RUNNABLE;
   release(&ptable.lock);
 
-  if (fork_winner) {
-	yield();
+  if (condition == 1) {
+    curproc->state = RUNNING;
+	  yield();
   }
 
   return pid;
@@ -338,7 +339,7 @@ scheduler(void)
   for(;;){
     // Enable interrupts on this processor.
     sti();
-		if (scheduler_policy == 0) {
+		if (policy == 0) {
         // Loop over process table looking for process to run.
         acquire(&ptable.lock);
         ran = 0;
@@ -577,7 +578,7 @@ int sys_tickets_owned(int pid)
       return p->num_tickets;
     }
   }
-  return(&ptable.lock);
+  release(&ptable.lock);
   return -1;
 }
 
@@ -585,19 +586,19 @@ int sys_transfer_tickets(int pid, int tickets){
   struct proc *giver;
   struct proc *reciever;
   argint(0, &pid);
-  argint(1, &num_tickets);
+  argint(1, &tickets);
 
-  if(num_tickets < 0){
+  if(tickets < 0){
     return -1;
   }
   acquire(&ptable.lock);
   for(reciever = ptable.proc; reciever < &ptable.proc[NPROC]; reciever++){
     if(reciever ->pid == pid){
-      for(giver =ptable.proc; giver < &table.proc[NPROC]; giver++){
-        if(giver -> pid myproc() -> pid){
-          if (num_tickets <= (giver->num_tickets -1)){
-            giver->num_tickets -= num_tickets;
-            reciever->num_tickets += num_tickets;
+      for(giver = ptable.proc; giver < &ptable.proc[NPROC]; giver++){
+        if(giver -> pid == myproc() -> pid){
+          if (tickets <= (giver->num_tickets -1)){
+            giver->num_tickets -= tickets;
+            reciever->num_tickets += tickets;
             giver->stride = ((STRIDE_TOTAL_TICKETS * 10)/giver->num_tickets);
             reciever->stride = ((STRIDE_TOTAL_TICKETS * 10)/reciever->num_tickets);
             release(&ptable.lock);
