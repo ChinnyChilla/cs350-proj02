@@ -601,7 +601,7 @@ int sys_transfer_tickets(int pid, int tickets){
             giver->stride = ((STRIDE_TOTAL_TICKETS * 10)/giver->num_tickets);
             reciever->stride = ((STRIDE_TOTAL_TICKETS * 10)/reciever->num_tickets);
             release(&ptable.lock);
-            return given->num_tickets;
+            return giver->num_tickets;
           }
           else{
             release(&ptable.lock);
