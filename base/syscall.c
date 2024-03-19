@@ -105,8 +105,10 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_shutdown(void);
 extern int sys_enable_sched_trace(void);
-extern int sys_fork_winner(void);
-extern int sys_set_sched(void);
+extern int sys_fork_winner(int winner);
+extern int sys_set_sched(int sched_policy);
+extern int sys_tickets_owned(int pid);
+extern int sys_transfer_tickets(int pid, int tickets);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,

@@ -113,14 +113,31 @@ int sys_enable_sched_trace(void)
   return 0;
 }
 
-extern int fork_winner;
-void sys_fork_winner(void) {
-	argint(0, &fork_winner);
-	return;
+//extern int fork_winner;
+void sys_fork_winner(int winner) 
+{
+	//argint(0, &fork_winner);
+  argint(0, &winner);
+	//return;
+  if (winner==0){
+    condition = 0;
+  }
+  else{
+    condition = 1;
+  }
 }
 
-extern int scheduler_policy;
-void sys_set_sched(void) {
-	argint(0, &scheduler_policy);
-	return;
+//extern int scheduler_policy;
+void sys_set_sched(int sched_policy) {
+	//argint(0, &scheduler_policy);
+	//return;
+  argint(0, &sched_policy);
+  if (sched_policy==0){
+    policy = 0;
+  }
+  else{
+    policy = 1;
+  }
+
 }
+

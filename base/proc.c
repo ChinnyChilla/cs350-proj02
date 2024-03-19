@@ -19,6 +19,7 @@ int sched_trace_enabled = 0; // ZYF: for OS CPU/process project
 int sched_trace_counter = 0; // ZYF: counter for print formatting
 int fork_winner = 0;
 int scheduler_policy = 0;
+int STRIDE_TOTAL_TICKETS = 100;
 extern void forkret(void);
 extern void trapret(void);
 
@@ -561,4 +562,55 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int sys_tickets_owned(int pid)
+{
+  argint(0, &pid);
+  struct proc *p;
+  acquire(&ptable.lock);
+
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p -> pid == pid){
+      release(&ptable.lock);
+      cprintf("Ticket Number = %d\n", p->num_tickets);
+      return p->num_tickets;
+    }
+  }
+  return(&ptable.lock);
+  return -1;
+}
+
+int sys_transfer_tickets(int pid, int tickets){
+  struct proc *giver;
+  struct proc *reciever;
+  argint(0, &pid);
+  argint(1, &num_tickets);
+
+  if(num_tickets < 0){
+    return -1;
+  }
+  acquire(&ptable.lock);
+  for(reciever = ptable.proc; reciever < &ptable.proc[NPROC]; reciever++){
+    if(reciever ->pid == pid){
+      for(giver =ptable.proc; giver < &table.proc[NPROC]; giver++){
+        if(giver -> pid myproc() -> pid){
+          if (num_tickets <= (giver->num_tickets -1)){
+            giver->num_tickets -= num_tickets;
+            reciever->num_tickets += num_tickets;
+            giver->stride = ((STRIDE_TOTAL_TICKETS * 10)/giver->num_tickets);
+            reciever->stride = ((STRIDE_TOTAL_TICKETS * 10)/reciever->num_tickets);
+            release(&ptable.lock);
+            return given->num_tickets;
+          }
+          else{
+            release(&ptable.lock);
+            return -2;
+          }
+        }
+      }
+    }
+  }
+  release(&ptable.lock);
+  return -3;
 }
