@@ -411,7 +411,7 @@ scheduler(void)
 			if (p->state != RUNNABLE) {
 				continue;
 			}
-			if (p->pass < lowestPass) {
+			if ((p->pass < lowestPass) || ((p->pass == lowestPass) && (p->pid < lowestProcess->pid))) {
 				lowestPass = p->pass;
 				lowestProcess = p;
 			}
