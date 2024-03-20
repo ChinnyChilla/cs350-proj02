@@ -644,7 +644,6 @@ int sys_tickets_owned(int pid)
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if (p -> pid == pid){
       release(&ptable.lock);
-      cprintf("Ticket Number = %d\n", p->num_tickets);
       return p->num_tickets;
     }
   }
