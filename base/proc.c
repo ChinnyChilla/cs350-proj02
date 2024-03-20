@@ -219,6 +219,24 @@ fork(void)
 
   acquire(&ptable.lock);
   np->state = RUNNABLE;
+  // get total amount of processes
+  struct proc* p;
+  int count = 0;
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+     if(p->state == RUNNING || p->state == RUNNABLE)
+        count++;
+  }
+  // assign each one the tickets
+  int ticketsPerProcess = STRIDE_TOTAL_TICKETS / count;
+		
+
+	for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) {
+		p->num_tickets = ticketsPerProcess;
+		p->pass = 0;
+		p->stride = (STRIDE_TOTAL_TICKETS * 10) / ticketsPerProcess;
+	}
   release(&ptable.lock);
 
   if (condition == 1) {
@@ -258,6 +276,23 @@ exit(void)
   acquire(&ptable.lock);
 
   // Parent might be sleeping in wait().
+  // count total amount of proceses
+  int count = 0;
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+     if(p->state == RUNNING || p->state == RUNNABLE)
+        count++;
+  }
+  // assign each one the tickets
+  int ticketsPerProcess = STRIDE_TOTAL_TICKETS / count;
+		
+
+	for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) {
+		p->num_tickets = ticketsPerProcess;
+		p->pass = 0;
+		p->stride = (STRIDE_TOTAL_TICKETS * 10) / p->num_tickets;
+	}
   wakeup1(curproc->parent);
 
   // Pass abandoned children to init.
@@ -339,7 +374,7 @@ scheduler(void)
   for(;;){
     // Enable interrupts on this processor.
     sti();
-		if (policy == 0) {
+	if (policy == 0) {
         // Loop over process table looking for process to run.
         acquire(&ptable.lock);
         ran = 0;
@@ -362,9 +397,44 @@ scheduler(void)
           // Process is done running for now.
           // It should have changed its p->state before coming back.
           c->proc = 0;
-    }
-    release(&ptable.lock);
-  	}
+    	}
+    	release(&ptable.lock);
+  	} else {
+		acquire(&ptable.lock);
+		
+		ran = 0;
+		
+		struct proc *lowestProcess;
+		int lowestPass = 999999999;
+
+		for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+			if (p->state != RUNNABLE) {
+				continue;
+			}
+			if (p->pass < lowestPass) {
+				lowestPass = p->pass;
+				lowestProcess = p;
+			}
+		}
+		lowestProcess->pass = lowestProcess->pass + lowestProcess->stride;
+		c->proc = lowestProcess;
+		switchuvm(lowestProcess);
+		lowestProcess->state = RUNNING;
+
+		swtch(&(c->scheduler), lowestProcess->context);
+		switchkvm();
+
+		// Process is done running for now.
+		// It should have changed its p->state before coming back.
+		c->proc = 0;
+
+
+
+
+
+		ran = 1;
+		release(&ptable.lock);
+	}
 
     if (ran == 0){
         halt();
